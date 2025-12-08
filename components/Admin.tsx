@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Shield, LayoutDashboard, Megaphone, Home, Package, Settings, Users, Ticket, Loader, Plus, Trash2, Save, MonitorPlay } from 'lucide-react';
 import { getDocs, query, collection, setDoc, doc, getDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import { db, appId } from '../services/firebase';
-import { LanguageContext } from '../App';
+import { LanguageContext } from '../LanguageContext';
 import { DEFAULT_HOME_CONFIG, DEFAULT_GAME_CONFIG, DEFAULT_ANNOUNCEMENT, DEFAULT_ADS_CONFIG } from '../constants';
 
 const MOCK_USERS = [

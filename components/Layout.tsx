@@ -4,7 +4,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db, appId } from '../services/firebase';
 import { UserProfile } from '../types';
 import { DEFAULT_ANNOUNCEMENT } from '../constants';
-import { LanguageContext } from '../App';
+import { LanguageContext } from '../LanguageContext';
 
 export const JidoBudiLogo = ({ className }: { className?: string }) => (
   <div className={`flex flex-col items-center justify-center ${className}`}>

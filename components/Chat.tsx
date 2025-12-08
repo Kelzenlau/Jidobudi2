@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { Bot, X, Send, Loader } from 'lucide-react';
-import { LanguageContext } from '../App';
+import { LanguageContext } from '../LanguageContext';
 
 const JIDO_SYSTEM_INSTRUCTION = `You are Jido, the friendly AI mascot for "Jido Budi - Snack Match & Arcade". 
 Your goal is to help users navigate the website and feel excited about winning snacks.

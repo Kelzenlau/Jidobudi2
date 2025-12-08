@@ -1,9 +1,9 @@
-import React, { useState, useEffect, createContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { onAuthStateChanged, signOut, signInWithCustomToken } from 'firebase/auth';
 import { Loader } from 'lucide-react';
 import { auth } from './services/firebase';
 import { UserProfile } from './types';
-import { TRANSLATIONS } from './constants';
+import { LanguageProvider } from './LanguageContext';
 
 // Components
 import { Navbar, Footer, AnnouncementBar, WhatsAppFloat } from './components/Layout';
@@ -12,15 +12,6 @@ import { AdminConsole } from './components/Admin';
 import { ChatWithJido } from './components/Chat';
 import { Hero, ProductShowcase, AboutUs, LeaderboardPage, ProfilePage, AdsSection } from './components/Views';
 import { GameSelection, Match3Game, SnackSwipeGame } from './components/Game';
-
-// Language Context
-export const LanguageContext = createContext<any>(null);
-
-const LanguageProvider = ({ children }: React.PropsWithChildren<{}>) => {
-  const [language, setLanguage] = useState('en');
-  const t = (key: string) => TRANSLATIONS[language]?.[key] || TRANSLATIONS['en'][key] || key;
-  return <LanguageContext.Provider value={{ language, setLanguage, t }}>{children}</LanguageContext.Provider>;
-};
 
 function AppContent() {
   const [user, setUser] = useState<UserProfile | null>(null);

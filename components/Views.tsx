@@ -3,7 +3,7 @@ import { ChevronRight, MapPin, Calendar, Shield, Ticket, Gamepad2, Loader } from
 import { getDoc, doc, collection, onSnapshot, query, addDoc, updateDoc } from 'firebase/firestore';
 import { db, appId } from '../services/firebase';
 import { JidoBudiLogo } from './Layout';
-import { LanguageContext } from '../App';
+import { LanguageContext } from '../LanguageContext';
 import { DEFAULT_HOME_CONFIG, DEFAULT_ADS_CONFIG } from '../constants';
 import { UserProfile } from '../types';
 
