@@ -4,6 +4,7 @@ import { Loader } from 'lucide-react';
 import { auth } from './services/firebase';
 import { UserProfile } from './types';
 import { LanguageProvider } from './LanguageContext';
+import { CartProvider } from './CartContext'; // Import CartProvider
 
 // Components
 import { Navbar, Footer, AnnouncementBar, WhatsAppFloat } from './components/Layout';
@@ -12,6 +13,7 @@ import { AdminConsole } from './components/Admin';
 import { ChatWithJido } from './components/Chat';
 import { Hero, ProductShowcase, AboutUs, LeaderboardPage, ProfilePage, AdsSection } from './components/Views';
 import { GameSelection, Match3Game, SnackSwipeGame } from './components/Game';
+import { CartDrawer } from './components/Cart'; // Import CartDrawer
 
 function AppContent() {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -57,6 +59,7 @@ function AppContent() {
       <Footer />
       <WhatsAppFloat />
       <ChatWithJido />
+      <CartDrawer /> {/* Add CartDrawer */}
     </div>
   );
 }
@@ -64,7 +67,9 @@ function AppContent() {
 export default function App() {
   return (
     <LanguageProvider>
+      <CartProvider>
         <AppContent />
+      </CartProvider>
     </LanguageProvider>
   );
 }

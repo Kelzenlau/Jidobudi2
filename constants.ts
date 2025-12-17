@@ -1,3 +1,4 @@
+
 export const DEFAULT_GAME_CONFIG = {
   winScore: 1000,
   timeLimit: 60,
@@ -5,12 +6,57 @@ export const DEFAULT_GAME_CONFIG = {
   theme: 'default' as const
 };
 
+export type MediaType = "image" | "video";
+
 export const DEFAULT_HOME_CONFIG = {
   title: "Snack Match & Arcade",
-  subtitle: "Choose your game, earn high scores, and win real vouchers from our virtual vending machine!",
-  mediaType: "image" as const,
-  mediaUrl: "https://images.unsplash.com/photo-1625699414476-47b1b369527d?auto=format&fit=crop&w=800&q=80"
+  subtitle:
+    "Choose your game, earn high scores, and win real vouchers from our virtual vending machine!",
+  mediaType: "video" as const,
+  mediaUrl: "https://vidaworld.com.my/wp-content/uploads/2025/01/VIDA-Zero_16x9_.mp4",
 };
+
+};
+
+// Updated initial product set based on user request
+export const INITIAL_PRODUCTS = [
+  { 
+    id: 'milo-kotak', 
+    name: "Milo Kotak", 
+    price: "2.50", 
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBqjR5LtUmW224lM_O0du3PDQWb4MCbsyLvQ&s" 
+  },
+  { 
+    id: 'roti-7days', 
+    name: "Roti 7 Days", 
+    price: "2.50", 
+    image: "https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcS9J6spHLq728dighvC-m_FnFvAkp5pJPntSdNSEnUXacl2TbXaY-wUfQ66dJ1UkS4xMqTN_YNl8XaKB2YJBQS0Y4_T2KUFSb0629lh8e7zhyz48nq1rwM_F1tSnlyIz0RxEBfLfLApIw&usqp=CAc" 
+  },
+  { 
+    id: 'maggi-kari', 
+    name: "Maggi Hot Cup Kari", 
+    price: "3.00", 
+    image: "https://www.maggi.my/sites/default/files/styles/product_image_tab_landscape_384_768/public/product_images/F22.png?itok=CTNu2-q2" 
+  },
+  { 
+    id: 'maggi-ayam', 
+    name: "Maggi Hot Cup Ayam", 
+    price: "3.00", 
+    image: "https://klec.jayagrocer.com/cdn/shop/files/002365-U-1-1.jpg?v=1757412101" 
+  },
+  { 
+    id: 'air-mineral', 
+    name: "Air Mineral", 
+    price: "1.00", 
+    image: "https://miizu.my/image/digitalgrocer/image/cache/data/all_product_images/product-204/3%20new-1080x1080.png" 
+  },
+  { 
+    id: 'sarsi', 
+    name: "Sarsi", 
+    price: "2.50", 
+    image: "https://jgut.jayagrocer.com/cdn/shop/products/008789-1-1_fe6127cd-8ef8-4f95-84c4-f127c19eb78c.jpg?v=1676372791" 
+  }
+];
 
 export const DEFAULT_ANNOUNCEMENT = {
   text: "",
@@ -19,11 +65,14 @@ export const DEFAULT_ANNOUNCEMENT = {
 };
 
 export const DEFAULT_ADS_CONFIG = {
-  active: false,
+  active: true,
   type: 'image' as const,
-  url: '',
+  url: 'https://www.nuvendingtech.com/wp-content/uploads/2025/07/MMAP-scaled.png',
   link: ''
 };
+
+};
+
 
 export const THEME_SETS: Record<string, string[]> = {
   default: ['🥔', '🍫', '🥤', '🍬', '🍪', '🧃'],

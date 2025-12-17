@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { User, Mail, Lock, ArrowRight, Zap, Cpu, Scan, Atom } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight, Zap, Cpu, Scan, Atom, Code } from 'lucide-react';
 import { signInAnonymously, signInWithCustomToken, updateProfile } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, appId } from '../services/firebase';
@@ -109,150 +109,175 @@ export const LoginPage = ({ setUser }: { setUser: (u: UserProfile) => void }) =>
     return (
         <div className="min-h-screen bg-[#02040a] flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans text-white">
             <style>{`
-                /* Advanced Animations */
-                @keyframes float-slow { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
-                @keyframes scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
-                @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-                @keyframes spin-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
-                
-                .quantum-card {
-                    background: rgba(10, 10, 20, 0.6);
-                    backdrop-filter: blur(20px);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    box-shadow: 0 0 40px rgba(0, 255, 255, 0.1), inset 0 0 20px rgba(0, 0, 0, 0.5);
-                }
-                
-                .quantum-input-group:focus-within .quantum-border {
-                    width: 100%;
-                    box-shadow: 0 0 15px #22d3ee;
-                }
-                
-                .quantum-btn {
-                    background: linear-gradient(90deg, #0891b2, #4f46e5);
-                    position: relative;
-                    z-index: 1;
-                    overflow: hidden;
-                }
-                .quantum-btn::before {
-                    content: '';
+                /* Advanced Quantum Animations */
+                @keyframes orbit-cw { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                @keyframes orbit-ccw { 0% { transform: rotate(0deg); } 100% { transform: rotate(-360deg); } }
+                @keyframes pulse-core { 0%, 100% { transform: scale(1); opacity: 0.8; box-shadow: 0 0 40px #22d3ee; } 50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 80px #a855f7; } }
+                @keyframes particle-float { 0%, 100% { transform: translateY(0); opacity: 0; } 50% { opacity: 0.8; } 100% { transform: translateY(-100px); opacity: 0; } }
+
+                .quantum-ring {
                     position: absolute;
-                    top: 0; left: 0; right: 0; bottom: 0;
-                    background: linear-gradient(90deg, #4f46e5, #0891b2);
-                    z-index: -1;
-                    transition: opacity 0.3s;
-                    opacity: 0;
+                    border-radius: 50%;
+                    border: 1px solid rgba(34, 211, 238, 0.3);
+                    box-shadow: 0 0 15px rgba(34, 211, 238, 0.1);
                 }
-                .quantum-btn:hover::before { opacity: 1; }
+                
+                .electron {
+                    position: absolute;
+                    top: 50%; left: 50%;
+                    width: 10px; height: 10px;
+                    background: #fff;
+                    border-radius: 50%;
+                    box-shadow: 0 0 20px #fff, 0 0 40px #22d3ee;
+                }
+
+                .quantum-core {
+                    position: absolute;
+                    top: 50%; left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 100px; height: 100px;
+                    background: radial-gradient(circle, #fff, #22d3ee, transparent);
+                    border-radius: 50%;
+                    filter: blur(10px);
+                    animation: pulse-core 4s infinite ease-in-out;
+                    z-index: 0;
+                }
+                
+                .login-card {
+                    background: rgba(10, 15, 30, 0.75);
+                    backdrop-filter: blur(24px);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    box-shadow: 0 0 80px rgba(0, 0, 0, 0.6);
+                }
+
+                .input-field {
+                    background: rgba(0, 0, 0, 0.4);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    transition: all 0.3s ease;
+                }
+                .input-field:focus-within {
+                    border-color: #22d3ee;
+                    box-shadow: 0 0 20px rgba(34, 211, 238, 0.2);
+                    background: rgba(0, 0, 0, 0.6);
+                }
             `}</style>
             
-            {/* Ambient Background */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                 {/* Orbs */}
-                 <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[100px] animate-[float-slow_8s_ease-in-out_infinite]"></div>
-                 <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-600/20 rounded-full blur-[100px] animate-[float-slow_10s_ease-in-out_infinite_reverse]"></div>
+            {/* Immersive Background */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
+                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-950 via-[#02040a] to-[#000]"></div>
                  
-                 {/* Particles */}
-                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full animate-[spin-slow_20s_linear_infinite]"></div>
-                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border border-white/10 rounded-full animate-[spin-reverse_15s_linear_infinite]"></div>
+                 {/* Quantum Structure */}
+                 <div className="relative w-[800px] h-[800px] opacity-30">
+                     <div className="quantum-core"></div>
+                     {/* Rings */}
+                     <div className="quantum-ring w-[300px] h-[300px] top-[250px] left-[250px] animate-[orbit-cw_10s_linear_infinite] border-cyan-500/40">
+                         <div className="electron" style={{top: '-5px', left: '50%'}}></div>
+                     </div>
+                     <div className="quantum-ring w-[500px] h-[500px] top-[150px] left-[150px] animate-[orbit-ccw_15s_linear_infinite] border-purple-500/30">
+                         <div className="electron" style={{top: '50%', left: '-5px', backgroundColor: '#d8b4fe', boxShadow: '0 0 20px #a855f7'}}></div>
+                     </div>
+                     <div className="quantum-ring w-[700px] h-[700px] top-[50px] left-[50px] animate-[orbit-cw_25s_linear_infinite] border-blue-500/20">
+                         <div className="electron" style={{bottom: '-5px', left: '50%'}}></div>
+                     </div>
+                 </div>
+
+                 {/* Floating Particles */}
+                 {[...Array(30)].map((_, i) => (
+                     <div key={i} className="absolute bg-cyan-400 rounded-full blur-[1px]" style={{
+                         top: `${Math.random() * 100}%`,
+                         left: `${Math.random() * 100}%`,
+                         width: `${Math.random() * 2 + 1}px`,
+                         height: `${Math.random() * 2 + 1}px`,
+                         animation: `particle-float ${3 + Math.random() * 5}s infinite linear`,
+                         animationDelay: `${Math.random() * 5}s`
+                     }}></div>
+                 ))}
             </div>
 
             {/* Login Container */}
-            <div className="relative z-10 w-full max-w-md">
-                {/* Logo & Header */}
-                <div className="text-center mb-8 relative group cursor-default">
-                    <div className="relative inline-block mb-4 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-[360deg]">
-                        <div className="absolute inset-0 bg-cyan-500/30 blur-xl rounded-full"></div>
-                        <JidoBudiLogo className="relative z-10 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]" />
-                        <Atom className="absolute -top-4 -right-4 text-cyan-400 animate-[spin-slow_4s_linear_infinite]" size={32} />
+            <div className="relative z-10 w-full max-w-md perspective-[1000px]">
+                {/* Header */}
+                <div className="text-center mb-10 relative group">
+                    <div className="relative inline-block mb-4">
+                        <div className="absolute inset-0 bg-cyan-500/40 blur-3xl rounded-full animate-pulse"></div>
+                        <JidoBudiLogo className="relative z-10 drop-shadow-[0_0_30px_rgba(34,211,238,0.8)] transform group-hover:scale-110 transition-transform duration-500" />
                     </div>
-                    <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-white to-purple-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)] tracking-tight">
+                    <h1 className="text-5xl font-black text-white tracking-tighter drop-shadow-2xl">
                         {t('login_welcome')}
                     </h1>
-                    <div className="flex items-center justify-center gap-2 text-cyan-200/60 text-xs font-bold tracking-[0.2em] mt-2 uppercase">
-                        <span className="w-8 h-[1px] bg-gradient-to-r from-transparent to-cyan-500"></span>
-                        SYSTEM ACCESS
-                        <span className="w-8 h-[1px] bg-gradient-to-l from-transparent to-cyan-500"></span>
-                    </div>
                 </div>
 
                 {/* Card */}
-                <div className="quantum-card rounded-2xl overflow-hidden relative">
-                    {/* Scanning Line Effect */}
-                    <div className="absolute inset-0 pointer-events-none opacity-10 bg-gradient-to-b from-transparent via-cyan-500 to-transparent h-[10%] w-full animate-[scanline_3s_linear_infinite]"></div>
-
+                <div className="login-card rounded-3xl overflow-hidden relative transform transition-transform hover:scale-[1.01] duration-500">
+                    
                     {/* Tabs */}
                     <div className="flex border-b border-white/5 bg-black/20">
-                        <button onClick={() => {setIsLogin(true); setError('');}} className={`flex-1 py-4 text-sm font-bold tracking-wider transition-all relative ${isLogin ? 'text-cyan-400 bg-white/5' : 'text-slate-500 hover:text-slate-300'}`}>
-                            {t('login_btn')}
-                            {isLogin && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-cyan-500 shadow-[0_0_10px_#22d3ee]"></div>}
+                        <button onClick={() => {setIsLogin(true); setError('');}} className={`flex-1 py-5 text-sm font-bold tracking-widest uppercase transition-all relative group ${isLogin ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'}`}>
+                            <span className="relative z-10">{t('login_btn')}</span>
+                            {isLogin && <div className="absolute inset-x-0 bottom-0 h-[2px] bg-cyan-500 shadow-[0_0_20px_#22d3ee]"></div>}
                         </button>
-                        <button onClick={() => {setIsLogin(false); setError('');}} className={`flex-1 py-4 text-sm font-bold tracking-wider transition-all relative ${!isLogin ? 'text-purple-400 bg-white/5' : 'text-slate-500 hover:text-slate-300'}`}>
-                            {t('signup_btn')}
-                            {!isLogin && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-500 shadow-[0_0_10px_#a855f7]"></div>}
+                        <button onClick={() => {setIsLogin(false); setError('');}} className={`flex-1 py-5 text-sm font-bold tracking-widest uppercase transition-all relative group ${!isLogin ? 'text-purple-400' : 'text-slate-500 hover:text-slate-300'}`}>
+                            <span className="relative z-10">{t('signup_btn')}</span>
+                            {!isLogin && <div className="absolute inset-x-0 bottom-0 h-[2px] bg-purple-500 shadow-[0_0_20px_#a855f7]"></div>}
                         </button>
                     </div>
 
                     <form onSubmit={handleSubmit} className="p-8 space-y-6">
-                         {/* Inputs with Quantum Styling */}
                          <div className="space-y-5">
-                            <div className="quantum-input-group relative">
-                                <label className="text-[10px] font-bold text-cyan-500 uppercase tracking-widest mb-1 block pl-1">ID</label>
-                                <div className="relative flex items-center bg-black/40 border border-white/10 rounded-lg overflow-hidden group focus-within:bg-black/60 transition-colors">
-                                    <div className="pl-4 text-slate-500 group-focus-within:text-cyan-400 transition-colors"><User size={18} /></div>
-                                    <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-transparent border-none text-white px-4 py-3 focus:ring-0 placeholder-slate-600 text-sm font-medium tracking-wide" placeholder="Enter ID..." />
-                                </div>
-                                <div className="quantum-border absolute bottom-0 left-1/2 -translate-x-1/2 h-[1px] bg-cyan-500 w-0 transition-all duration-300"></div>
+                            <div className="input-field rounded-2xl flex items-center p-1 group">
+                                <div className="p-3 text-slate-500 group-focus-within:text-cyan-400 transition-colors"><User size={20} /></div>
+                                <div className="h-6 w-[1px] bg-white/10 mx-1"></div>
+                                <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-transparent border-none text-white px-3 py-3 focus:ring-0 placeholder-slate-600 text-sm font-bold tracking-wider outline-none" placeholder="USERNAME" />
                             </div>
 
                             {!isLogin && (
-                                <div className="quantum-input-group relative animate-in slide-in-from-right fade-in">
-                                    <label className="text-[10px] font-bold text-purple-500 uppercase tracking-widest mb-1 block pl-1">EMAIL</label>
-                                    <div className="relative flex items-center bg-black/40 border border-white/10 rounded-lg overflow-hidden group focus-within:bg-black/60 transition-colors">
-                                        <div className="pl-4 text-slate-500 group-focus-within:text-purple-400 transition-colors"><Mail size={18} /></div>
-                                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-transparent border-none text-white px-4 py-3 focus:ring-0 placeholder-slate-600 text-sm font-medium tracking-wide" placeholder="user@net.com" />
-                                    </div>
-                                    <div className="quantum-border absolute bottom-0 left-1/2 -translate-x-1/2 h-[1px] bg-purple-500 w-0 transition-all duration-300"></div>
+                                <div className="input-field rounded-2xl flex items-center p-1 group animate-in slide-in-from-right fade-in duration-300">
+                                    <div className="p-3 text-slate-500 group-focus-within:text-purple-400 transition-colors"><Mail size={20} /></div>
+                                    <div className="h-6 w-[1px] bg-white/10 mx-1"></div>
+                                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-transparent border-none text-white px-3 py-3 focus:ring-0 placeholder-slate-600 text-sm font-bold tracking-wider outline-none" placeholder="EMAIL ADDRESS" />
                                 </div>
                             )}
 
-                            <div className="quantum-input-group relative">
-                                <label className="text-[10px] font-bold text-cyan-500 uppercase tracking-widest mb-1 block pl-1">PASSWORD</label>
-                                <div className="relative flex items-center bg-black/40 border border-white/10 rounded-lg overflow-hidden group focus-within:bg-black/60 transition-colors">
-                                    <div className="pl-4 text-slate-500 group-focus-within:text-cyan-400 transition-colors"><Lock size={18} /></div>
-                                    <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-transparent border-none text-white px-4 py-3 focus:ring-0 placeholder-slate-600 text-sm font-medium tracking-wide" placeholder="••••••••" />
-                                </div>
-                                <div className="quantum-border absolute bottom-0 left-1/2 -translate-x-1/2 h-[1px] bg-cyan-500 w-0 transition-all duration-300"></div>
+                            <div className="input-field rounded-2xl flex items-center p-1 group">
+                                <div className="p-3 text-slate-500 group-focus-within:text-cyan-400 transition-colors"><Lock size={20} /></div>
+                                <div className="h-6 w-[1px] bg-white/10 mx-1"></div>
+                                <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-transparent border-none text-white px-3 py-3 focus:ring-0 placeholder-slate-600 text-sm font-bold tracking-wider outline-none" placeholder="PASSWORD" />
                             </div>
                          </div>
 
                         {error && (
-                            <div className="bg-red-500/10 border border-red-500/30 p-3 rounded-lg flex items-center gap-3 animate-bounce">
-                                <div className="bg-red-500/20 p-1 rounded-full text-red-400"><Zap size={14} /></div>
-                                <p className="text-red-300 text-xs font-bold tracking-wide">{error}</p>
+                            <div className="bg-red-500/10 border border-red-500/50 p-3 rounded-xl flex items-center gap-3 animate-pulse">
+                                <Zap size={16} className="text-red-400" />
+                                <p className="text-red-300 text-xs font-bold tracking-wide uppercase">{error}</p>
                             </div>
                         )}
 
-                        <button type="submit" disabled={isLoading} className="quantum-btn w-full py-4 rounded-xl text-white font-bold tracking-widest uppercase shadow-[0_0_20px_rgba(8,145,178,0.4)] hover:shadow-[0_0_40px_rgba(8,145,178,0.6)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group">
-                            {isLoading ? (
-                                <span className="flex items-center justify-center gap-2"><Scan className="animate-spin" size={18} /> Authenticating...</span>
-                            ) : (
-                                <span className="flex items-center justify-center gap-2">
-                                    {isLogin ? 'LOGIN' : 'REGISTER'} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                                </span>
-                            )}
+                        <button type="submit" disabled={isLoading} className="w-full py-4 rounded-xl font-black tracking-[0.2em] uppercase text-white shadow-lg transform transition-all active:scale-[0.98] relative overflow-hidden group bg-slate-900 border border-white/10">
+                            <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-purple-600 opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+                            <span className="relative flex items-center justify-center gap-3 z-10">
+                                {isLoading ? (
+                                    <><Atom className="animate-spin" size={20} /> ACCESSING...</>
+                                ) : (
+                                    <>{isLogin ? 'ENTER SYSTEM' : 'INITIALIZE'} <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" /></>
+                                )}
+                            </span>
                         </button>
                     </form>
 
-                    {/* Footer / Languages */}
+                    {/* Footer */}
                     <div className="bg-black/40 p-4 border-t border-white/5 flex justify-between items-center px-8">
                          <div className="flex gap-4">
                             {['en', 'ms', 'zh'].map((lang) => (
-                                <button key={lang} onClick={() => setLanguage(lang)} className={`text-[10px] font-bold uppercase transition-colors ${language === lang ? 'text-cyan-400 shadow-[0_2px_10px_rgba(34,211,238,0.4)]' : 'text-slate-600 hover:text-slate-400'}`}>
+                                <button key={lang} onClick={() => setLanguage(lang)} className={`text-[10px] font-bold uppercase transition-all hover:scale-110 ${language === lang ? 'text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]' : 'text-slate-600 hover:text-white'}`}>
                                     {lang === 'en' ? 'ENG' : lang === 'ms' ? 'MAY' : 'CHN'}
                                 </button>
                             ))}
                          </div>
-                         <div className="text-[10px] text-slate-600 font-mono">V.1.0.42</div>
+                         <div className="flex items-center gap-2 text-[10px] text-green-500 font-mono">
+                             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping"></div>
+                             ONLINE
+                         </div>
                     </div>
                 </div>
             </div>

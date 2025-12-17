@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { Bot, X, Send, Loader } from 'lucide-react';
@@ -54,18 +55,8 @@ export const ChatWithJido = () => {
         setIsLoading(true);
 
         try {
-            const apiKey = process.env.API_KEY;
-            
-            // Demo mode fallback if no key is present
-            if (!apiKey) {
-                setTimeout(() => {
-                     setMessages(prev => [...prev, { role: 'assistant', text: "I'm currently in demo mode! I recommend the Maggi Hot Cup or the 7 Days Croissant. They are yummy! 😋 (Configure API Key for full AI chat)" }]);
-                     setIsLoading(false);
-                }, 800);
-                return;
-            }
-
-            const ai = new GoogleGenAI({ apiKey });
+            // Fix: Initializing GoogleGenAI with process.env.API_KEY directly as per guidelines
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             
             // Prepare history for context awareness
             // Map 'assistant' (UI) to 'model' (API)
@@ -74,17 +65,20 @@ export const ChatWithJido = () => {
                 parts: [{ text: msg.text }]
             }));
 
-            // We use 'gemini-2.5-flash' for fast, smart, and concise chat interactions.
+            // Fix: Use 'gemini-3-flash-preview' for basic text/chat tasks
+            // Fix: Added thinkingBudget: 0 because maxOutputTokens is set, as per SDK guidelines to avoid empty responses
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-3-flash-preview',
                 contents: history,
                 config: {
                     systemInstruction: JIDO_SYSTEM_INSTRUCTION,
                     maxOutputTokens: 150, // Enforce brevity
                     temperature: 0.7,
+                    thinkingConfig: { thinkingBudget: 0 }
                 }
             });
             
+            // Fix: Use .text property (not method) to get response content
             const botResponse = response.text;
 
             if (!botResponse) {

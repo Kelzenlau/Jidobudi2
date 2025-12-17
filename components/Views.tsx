@@ -1,15 +1,18 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { ChevronRight, MapPin, Calendar, Shield, Ticket, Gamepad2, Loader } from 'lucide-react';
+
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import { ChevronRight, MapPin, Calendar, Shield, Ticket, Gamepad2, Loader, ShoppingCart, Plus, Star } from 'lucide-react';
 import { getDoc, doc, collection, onSnapshot, query, addDoc, updateDoc } from 'firebase/firestore';
 import { db, appId } from '../services/firebase';
 import { JidoBudiLogo } from './Layout';
 import { LanguageContext } from '../LanguageContext';
-import { DEFAULT_HOME_CONFIG, DEFAULT_ADS_CONFIG } from '../constants';
+import { DEFAULT_HOME_CONFIG, DEFAULT_ADS_CONFIG, INITIAL_PRODUCTS } from '../constants';
 import { UserProfile } from '../types';
+import { useCart } from '../CartContext';
 
 export const Hero = ({ onPlay }: { onPlay: () => void }) => {
   const { t } = useContext(LanguageContext);
   const [config, setConfig] = useState<any>(DEFAULT_HOME_CONFIG);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
   useEffect(() => { 
       const fetchConfig = async () => {
@@ -25,6 +28,12 @@ export const Hero = ({ onPlay }: { onPlay: () => void }) => {
   }, []);
 
   const activeMediaUrl = config.mediaUrl || config.heroImage || DEFAULT_HOME_CONFIG.mediaUrl;
+  
+  useEffect(() => {
+      if (videoRef.current && config.mediaType === 'video') {
+          videoRef.current.play().catch(e => console.log("Autoplay blocked:", e));
+      }
+  }, [activeMediaUrl, config.mediaType]);
 
   return (
     <section className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden bg-[#0f0c29] text-white pt-24">
@@ -39,19 +48,18 @@ export const Hero = ({ onPlay }: { onPlay: () => void }) => {
             <div className="w-full md:w-1/2 flex justify-center relative"><div className="relative w-72 h-[450px] md:w-80 md:h-[500px] bg-gradient-to-b from-purple-200 to-indigo-300 rounded-[2.5rem] p-4 shadow-2xl border-r-8 border-b-8 border-indigo-900 transform rotate-y-12 hover:scale-105 transition-transform duration-500">
                 <div className="w-full h-3/5 bg-sky-200/50 backdrop-blur-sm rounded-xl border-4 border-white/40 shadow-inner flex items-center justify-center p-2 overflow-hidden relative">
                     {config.mediaType === 'video' ? (
-                        <video src={activeMediaUrl} autoPlay loop muted playsInline className="w-full h-full object-cover rounded-lg opacity-90" onError={(e: any) => {
-                             e.target.style.display='none';
-                             if(e.target.parentElement) {
-                                e.target.parentElement.style.backgroundImage = `url('https://images.unsplash.com/photo-1625699414476-47b1b369527d?auto=format&fit=crop&w=800&q=80')`;
-                                e.target.parentElement.style.backgroundSize = 'cover';
-                                e.target.parentElement.style.backgroundPosition = 'center';
-                             }
-                        }} />
+                        <video 
+                            ref={videoRef}
+                            src={activeMediaUrl} 
+                            autoPlay 
+                            loop 
+                            muted 
+                            playsInline 
+                            preload="auto"
+                            className="w-full h-full object-cover rounded-lg opacity-90" 
+                        />
                     ) : (
-                        <img src={activeMediaUrl} alt="Vending Machine" className="w-full h-full object-cover rounded-lg opacity-90" onError={(e: any) => {
-                            e.target.onerror = null;
-                            e.target.src = "https://images.unsplash.com/photo-1625699414476-47b1b369527d?auto=format&fit=crop&w=800&q=80";
-                        }}/>
+                        <img src={activeMediaUrl} alt="Vending Machine" className="w-full h-full object-cover rounded-lg opacity-90" />
                     )}
                 </div>
                 <div className="w-full h-1/3 mt-4 bg-white/20 rounded-xl p-3 flex flex-col justify-between">
@@ -101,40 +109,76 @@ export const AdsSection = () => {
 
 export const ProductShowcase = () => {
   const { t } = useContext(LanguageContext);
-  const [products, setProducts] = useState<any[]>([]);
+  const { addToCart } = useCart();
+  // Using the exact INITIAL_PRODUCTS requested by the user
+  const [products, setProducts] = useState<any[]>(INITIAL_PRODUCTS);
   
-  const DEFAULTS = [
-       { id: '1', name: "Maggi Hot Cup", price: "2.50", image: "https://www.maggi.my/sites/default/files/styles/home_stage_944_531/public/2020-10/MAGGI%20HOT%20CUP%20Curry%2059g.png" },
-       { id: '2', name: "Milo Kotak", price: "1.80", image: "https://www.milo.com.my/sites/default/files/2023-06/MILO_UHT_125ml_0.png" },
-       { id: '3', name: "Air Mineral", price: "1.20", image: "https://www.spritzer.com.my/wp-content/uploads/2022/07/Mineral-Water-550ml-1.png" },
-       { id: '4', name: "Roti 7 Days", price: "1.50", image: "https://www.7days.com/sites/default/files/2021-02/croissant_chocolate_0.png" }
-  ];
-
   useEffect(() => {
-    try {
-        const unsub = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), (snap) => {
-            if (!snap.empty) setProducts(snap.docs.map(d => ({id: d.id, ...d.data()})));
-            else setProducts(DEFAULTS);
-        }, (error) => {
-            setProducts(DEFAULTS);
-        });
-        return () => unsub();
-    } catch (e) {
-        setProducts(DEFAULTS);
-    }
+    const unsub = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), (snap) => {
+        if (!snap.empty) {
+            const dbProducts = snap.docs.map(d => ({id: d.id, ...d.data()}));
+            // Combine initial ones with DB ones, prioritizing the specific 6 requested by the user
+            const combined = [...INITIAL_PRODUCTS];
+            dbProducts.forEach(dbP => {
+                if (!combined.find(p => p.name.toLowerCase() === dbP.name.toLowerCase())) {
+                    combined.push(dbP);
+                }
+            });
+            setProducts(combined);
+        } else {
+            setProducts(INITIAL_PRODUCTS);
+        }
+    }, (error) => {
+        console.error("Firestore sync issue, using hardcoded products.");
+        setProducts(INITIAL_PRODUCTS);
+    });
+    return () => unsub();
   }, []);
 
   return (
-    <section className="py-20 px-6 bg-indigo-50 relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-50"></div>
+    <section className="py-20 px-6 bg-slate-50 relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-30"></div>
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="text-center mb-16"><h2 className="text-sm font-bold text-blue-500 uppercase tracking-wider mb-2">{t('restocked')}</h2><h3 className="text-4xl font-black text-slate-900 mb-4">{t('whats_inside')}</h3><p className="text-slate-500 max-w-2xl mx-auto">{t('grab_snacks')}</p></div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="text-center mb-16">
+            <h2 className="text-sm font-bold text-indigo-600 uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
+                <Star size={16} fill="currentColor" /> {t('restocked')} <Star size={16} fill="currentColor" />
+            </h2>
+            <h3 className="text-5xl font-black text-slate-900 mb-4 tracking-tight">Vending Selection</h3>
+            <p className="text-slate-500 max-w-xl mx-auto text-lg leading-relaxed">{t('grab_snacks')}</p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {products.map((product) => (
-                <div key={product.id || Math.random()} className={`group relative p-6 rounded-3xl border-2 border-slate-100 bg-white hover:border-blue-400 transition-all duration-300 hover:scale-105 hover:shadow-xl`}>
-                    <div className="absolute top-3 right-3 bg-white/80 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-slate-600 shadow-sm border border-slate-100">RM {product.price}</div>
-                    <div className="h-40 flex items-center justify-center mb-4 p-2 relative"><img src={product.image} alt={product.name} className="w-full h-full object-contain filter drop-shadow-lg group-hover:scale-110 transition-transform duration-300" onError={(e: any) => { e.target.onerror = null; e.target.src = `https://placehold.co/400x400/f3f4f6/94a3b8?text=${encodeURIComponent(product.name)}`; }} /></div>
-                    <div className="text-center"><h4 className={`text-lg font-black text-slate-800 mb-1`}>{product.name}</h4><button className="mt-3 w-full py-2 bg-slate-50 rounded-xl text-sm font-bold text-slate-700 shadow-sm border border-slate-200 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-500 transition-all flex items-center justify-center gap-2"><span>{t('select')}</span></button></div>
+                <div key={product.id || Math.random()} className="group relative bg-white rounded-[2.5rem] p-6 shadow-xl border border-slate-100 hover:border-indigo-400 transition-all duration-500 hover:-translate-y-2 flex flex-col overflow-hidden">
+                    {/* Price Tag Overlay */}
+                    <div className="absolute top-6 left-6 z-20 bg-indigo-600 text-white px-4 py-1.5 rounded-full text-sm font-black shadow-lg">
+                        RM {parseFloat(product.price).toFixed(2)}
+                    </div>
+                    
+                    {/* Product Image Area */}
+                    <div className="h-48 flex items-center justify-center mb-6 relative bg-slate-50 rounded-3xl overflow-hidden shadow-inner">
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-white/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <img 
+                            src={product.image} 
+                            alt={product.name} 
+                            className="w-full h-full object-contain p-4 mix-blend-multiply filter drop-shadow-xl group-hover:scale-110 transition-transform duration-500 relative z-10" 
+                            onError={(e: any) => { 
+                                e.target.onerror = null; 
+                                e.target.src = `https://placehold.co/400x400/f3f4f6/6366f1?text=${encodeURIComponent(product.name)}`; 
+                            }} 
+                        />
+                    </div>
+
+                    <div className="text-center flex-1 flex flex-col">
+                        <h4 className="text-xl font-black text-slate-800 mb-2 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{product.name}</h4>
+                        <div className="flex-1"></div>
+                        <button 
+                            onClick={() => addToCart(product)}
+                            className="mt-4 w-full py-4 bg-slate-900 text-white font-black rounded-2xl shadow-lg hover:bg-indigo-600 hover:shadow-indigo-600/30 transition-all flex items-center justify-center gap-3 active:scale-95 text-xs uppercase tracking-widest"
+                        >
+                            <ShoppingCart size={18} />
+                            <span>Select Item</span>
+                        </button>
+                    </div>
                 </div>
             ))}
         </div>
@@ -145,20 +189,107 @@ export const ProductShowcase = () => {
 
 export const AboutUs = () => {
   const { t } = useContext(LanguageContext);
-  const team = [
-    { name: "Livis", role: "CEO", color: "bg-purple-100 text-purple-600" },
-    { name: "Yuan Kang", role: "CFO", color: "bg-blue-100 text-blue-600" },
-    { name: "Aiman", role: "COO", color: "bg-green-100 text-green-600" },
-    { name: "Premi", role: "CMO", color: "bg-pink-100 text-pink-600" },
-    { name: "Yi Han", role: "CPO", color: "bg-orange-100 text-orange-600" },
+  
+  // Correctly defined team with gendered avatars as requested
+  const DEFAULT_TEAM = [
+    { 
+      name: "Livis", 
+      role: "CEO", 
+      photo: "https://drive.google.com/thumbnail?id=1YYJZ-6ysxeXMsABwG9fAtsBF0XJsfuRg&sz=w1000" 
+    },
+    { 
+      name: "Yuan Kang", 
+      role: "CFO", 
+      photo: "https://drive.google.com/thumbnail?id=1f2rSdb-9TLysV6aAbuDsNzCiUMtRzbBj&sz=w1000" 
+    },
+    { 
+      name: "Aiman", 
+      role: "COO", 
+      photo: "https://drive.google.com/thumbnail?id=1Udkhw2XWiTnmP36IPbOrWEEF4EyBsgSD&sz=w1000" 
+    },
+    { 
+      name: "Premi", 
+      role: "CMO", 
+      photo: "https://drive.google.com/thumbnail?id=1Ryt57nOk3FmQJi6A1qln9gc5u0-5tu-P&sz=w1000" 
+    },
+    { 
+      name: "Yi Han", 
+      role: "CPO", 
+      photo: "https://drive.google.com/thumbnail?id=1vA046bqlxrHWGIICsSxqvIzgCKmMRA-_&sz=w1000" 
+    },
   ];
+
+  const [team, setTeam] = useState<any[]>(DEFAULT_TEAM);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'team'), (snap) => {
+        if (!snap.empty) {
+            setTeam(snap.docs.map(d => ({id: d.id, ...d.data()})));
+        } else {
+            setTeam(DEFAULT_TEAM);
+        }
+    }, () => setTeam(DEFAULT_TEAM));
+    return () => unsub();
+  }, []);
+
   return (
     <section className="py-24 px-6 bg-indigo-50 min-h-screen">
         <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16"><h2 className="text-4xl font-black text-slate-900 mb-4">{t('about_title')}</h2><p className="text-slate-500 max-w-2xl mx-auto text-lg">{t('about_desc')}</p><div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm border border-slate-200 text-slate-600"><MapPin size={18} className="text-red-500" /><span className="font-medium">Faculty of Economics and Management (FEP)</span></div></div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">{team.map((member, index) => (<div key={index} className="bg-white p-6 rounded-2xl shadow-lg border border-slate-100 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300 relative group"><div className="w-24 h-24 rounded-full overflow-hidden mb-4 bg-slate-100 border-4 border-white shadow-md"><img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.name}`} alt={member.name} className="w-full h-full object-cover" /></div><h3 className="text-xl font-bold text-slate-800 mb-1">{member.name}</h3><span className={`px-3 py-1 rounded-full text-xs font-bold ${member.color}`}>{member.role}</span></div>))}</div>
-            <div className="mt-20 bg-gradient-to-r from-indigo-900 to-slate-900 rounded-[2.5rem] p-10 text-center text-white relative overflow-hidden"><div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white/10 to-transparent"></div><h3 className="text-2xl font-bold mb-4 relative z-10">{t('mission_title')}</h3><p className="max-w-3xl mx-auto text-slate-300 leading-relaxed relative z-10">{t('mission_desc')}</p></div>
-            <div className="mt-20"><h3 className="text-2xl font-bold text-slate-900 mb-6 text-center">{t('visit_us')}</h3><div className="w-full h-96 bg-slate-200 rounded-[2.5rem] overflow-hidden shadow-xl border border-slate-100 relative group"><iframe title="Jido Budi Location" width="100%" height="100%" id="gmap_canvas" src="https://maps.google.com/maps?q=Faculty%20of%20Economics%20%26%20Management%2C%2043600%20Bangi%2C%20Selangor&t=&z=15&ie=UTF8&iwloc=&output=embed" frameBorder="0" scrolling="no" marginHeight="0" marginWidth="0" className="absolute inset-0 grayscale group-hover:grayscale-0 transition-all duration-500"></iframe><div className="absolute inset-0 pointer-events-none border-[12px] border-white/20 rounded-[2.5rem]"></div></div></div>
+            <div className="text-center mb-16">
+                <h2 className="text-4xl font-black text-slate-900 mb-4">{t('about_title')}</h2>
+                <p className="text-slate-500 max-w-2xl mx-auto text-lg mb-8">{t('about_desc')}</p>
+                <div className="inline-flex items-center gap-2 px-6 py-3 bg-white rounded-full shadow-lg border border-slate-200 text-slate-600 font-bold">
+                    <MapPin size={18} className="text-red-500" />
+                    <span>Faculty of Economics and Management (FEP)</span>
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
+                {team.map((member, index) => (
+                    <div key={index} className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 flex flex-col items-center text-center hover:-translate-y-4 transition-all duration-500 relative group animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: `${index * 100}ms` }}>
+                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-indigo-50/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-[2.5rem]"></div>
+                        <div className="w-32 h-32 rounded-full overflow-hidden mb-6 bg-slate-100 border-4 border-white shadow-2xl relative z-10 group-hover:scale-110 transition-transform">
+                            <img 
+                                src={member.photo || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(member.name)}&topType=${member.name === 'Premi' ? 'longHair' : 'shortHair'}`} 
+                                alt={member.name} 
+                                className="w-full h-full object-cover" 
+                            />
+                        </div>
+                        <h3 className="text-2xl font-black text-slate-800 mb-1 relative z-10">{member.name}</h3>
+                        <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-slate-100 text-slate-500 relative z-10 group-hover:bg-indigo-600 group-hover:text-white transition-colors`}>
+                            {member.role}
+                        </span>
+                    </div>
+                ))}
+            </div>
+
+            <div className="mt-20 bg-gradient-to-br from-indigo-900 via-slate-900 to-black rounded-[3rem] p-12 text-center text-white relative overflow-hidden shadow-2xl border border-white/10">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-[100px]"></div>
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-[100px]"></div>
+                <h3 className="text-3xl font-black mb-6 relative z-10 tracking-tight">{t('mission_title')}</h3>
+                <p className="max-w-3xl mx-auto text-slate-400 text-xl leading-relaxed relative z-10 font-medium">
+                    {t('mission_desc')}
+                </p>
+            </div>
+
+            <div className="mt-24">
+                <h3 className="text-3xl font-black text-slate-900 mb-8 text-center">{t('visit_us')}</h3>
+                <div className="w-full h-[500px] bg-white rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white relative group">
+                    <iframe 
+                        title="Jido Budi Location" 
+                        width="100%" 
+                        height="100%" 
+                        id="gmap_canvas" 
+                        src="https://maps.google.com/maps?q=Faculty%20of%20Economics%20%26%20Management%2C%2043600%20Bangi%2C%20Selangor&t=&z=15&ie=UTF8&iwloc=&output=embed" 
+                        frameBorder="0" 
+                        scrolling="no" 
+                        marginHeight="0" 
+                        marginWidth="0" 
+                        className="absolute inset-0 grayscale group-hover:grayscale-0 transition-all duration-1000"
+                    ></iframe>
+                    <div className="absolute inset-0 pointer-events-none border-[12px] border-white/20 rounded-[2.5rem]"></div>
+                </div>
+            </div>
         </div>
     </section>
   );

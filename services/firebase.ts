@@ -1,3 +1,5 @@
+
+// Fix: Use named imports for Firebase modular SDK to resolve potential module resolution issues with namespace imports
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
@@ -21,6 +23,7 @@ if (typeof __firebase_config !== 'undefined' && __firebase_config) {
   }
 }
 
+// Fix: Initialize Firebase services using standard modular functions and types for robust compatibility
 export const app: FirebaseApp = initializeApp(config);
 export const auth: Auth = getAuth(app);
 export const db: Firestore = getFirestore(app);

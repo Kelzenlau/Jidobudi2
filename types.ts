@@ -22,6 +22,11 @@ export interface Product {
   image: string;
 }
 
+export interface CartItem extends Product {
+  cartId: string;
+  quantity: number;
+}
+
 export interface Voucher {
   id: string;
   code: string;

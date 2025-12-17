@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Menu, X, Home, Package, Gamepad2, Trophy, Users, Shield, LogOut, Globe, MessageCircle, Megaphone, Instagram } from 'lucide-react';
+import { Menu, X, Home, Package, Gamepad2, Trophy, Users, Shield, LogOut, Globe, MessageCircle, Megaphone, Instagram, ShoppingCart } from 'lucide-react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db, appId } from '../services/firebase';
 import { UserProfile } from '../types';
 import { DEFAULT_ANNOUNCEMENT } from '../constants';
 import { LanguageContext } from '../LanguageContext';
+import { useCart } from '../CartContext';
 
 export const JidoBudiLogo = ({ className }: { className?: string }) => (
   <div className={`flex flex-col items-center justify-center ${className}`}>
@@ -55,6 +56,7 @@ interface NavbarProps {
 
 export const Navbar = ({ onOpenAuth, user, onLogout, activePage, setActivePage }: NavbarProps) => {
   const { language, setLanguage, t } = useContext(LanguageContext);
+  const { items, setIsCartOpen } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   
@@ -70,8 +72,18 @@ export const Navbar = ({ onOpenAuth, user, onLogout, activePage, setActivePage }
       <div className="max-w-7xl mx-auto w-full flex justify-between items-center h-full">
         <div className="flex items-center -ml-4 h-full"><button onClick={() => setActivePage('home')} className="p-1 hover:bg-white/10 transition-colors rounded-2xl flex items-center h-full"><JidoBudiLogo className="transform scale-[0.3] origin-left" /></button></div>
         {user && <div className="hidden md:flex items-center space-x-8"><NavLink page="home" label={t('nav_home')} icon={Home} /><NavLink page="products" label={t('nav_products')} icon={Package} /><NavLink page="game" label={t('nav_game')} icon={Gamepad2} /><NavLink page="leaderboard" label={t('nav_leaderboard')} icon={Trophy} /><NavLink page="about" label={t('nav_about')} icon={Users} />{user.role === 'admin' && <NavLink page="admin" label="Admin" icon={Shield} />}</div>}
-        <div className="hidden md:flex items-center space-x-4">
-            <div className="relative">
+        <div className="flex items-center space-x-4">
+            {/* Cart Icon */}
+            <button onClick={() => setIsCartOpen(true)} className="relative p-2 text-slate-400 hover:text-white transition-colors">
+                <ShoppingCart size={20} />
+                {items.length > 0 && (
+                    <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-bounce">
+                        {items.length}
+                    </span>
+                )}
+            </button>
+
+            <div className="hidden md:block relative">
                 <button onClick={() => setLangMenuOpen(!langMenuOpen)} className="p-2 text-slate-400 hover:text-white transition-colors rounded-full hover:bg-white/10 flex items-center gap-2">
                     <Globe size={20} />
                     <span className="text-sm font-bold uppercase">{language}</span>
@@ -84,9 +96,9 @@ export const Navbar = ({ onOpenAuth, user, onLogout, activePage, setActivePage }
                     </div>
                 )}
             </div>
-            {user && (<><div className="flex items-center gap-3 bg-white/10 px-3 py-1.5 rounded-full border border-white/10 cursor-pointer hover:bg-white/20 transition-colors" onClick={() => setActivePage('profile')}><img src={user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`} alt="User" className="w-8 h-8 rounded-full bg-slate-700" /><div className="flex flex-col"><span className="text-xs text-slate-400 leading-none">{t('hello')},</span><span className="text-sm text-white font-bold leading-none">{user.displayName || 'Gamer'}</span></div></div><button onClick={onLogout} className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-full border border-red-500/20 transition-colors ml-2" title={t('nav_logout')}><LogOut size={18} /></button></>)}
+            {user && (<div className="hidden md:flex items-center"><div className="flex items-center gap-3 bg-white/10 px-3 py-1.5 rounded-full border border-white/10 cursor-pointer hover:bg-white/20 transition-colors" onClick={() => setActivePage('profile')}><img src={user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`} alt="User" className="w-8 h-8 rounded-full bg-slate-700" /><div className="flex flex-col"><span className="text-xs text-slate-400 leading-none">{t('hello')},</span><span className="text-sm text-white font-bold leading-none">{user.displayName || 'Gamer'}</span></div></div><button onClick={onLogout} className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-full border border-red-500/20 transition-colors ml-2" title={t('nav_logout')}><LogOut size={18} /></button></div>)}
+            <button className="md:hidden text-white" onClick={() => setIsOpen(!isOpen)}>{isOpen ? <X /> : <Menu />}</button>
         </div>
-        <button className="md:hidden text-white" onClick={() => setIsOpen(!isOpen)}>{isOpen ? <X /> : <Menu />}</button>
       </div>
        {isOpen && (<div className="absolute top-full left-0 w-full bg-slate-900 border-b border-slate-800 p-4 md:hidden flex flex-col space-y-4 shadow-xl z-40"><button onClick={() => { setActivePage('home'); setIsOpen(false); }} className="text-left text-slate-300">{t('nav_home')}</button><button onClick={() => { setActivePage('products'); setIsOpen(false); }} className="text-left text-slate-300">{t('nav_products')}</button><button onClick={() => { setActivePage('game'); setIsOpen(false); }} className="text-left text-slate-300">{t('nav_game')}</button><button onClick={() => { setActivePage('leaderboard'); setIsOpen(false); }} className="text-left text-slate-300">{t('nav_leaderboard')}</button><button onClick={() => { setActivePage('about'); setIsOpen(false); }} className="text-left text-slate-300">{t('nav_about')}</button><button onClick={() => { setActivePage('profile'); setIsOpen(false); }} className="text-left text-slate-300">{t('nav_profile')}</button><div className="h-px bg-slate-800 my-2"></div><div className="flex gap-4 mb-2"><button onClick={() => setLanguage('en')} className={`text-sm ${language === 'en' ? 'text-white font-bold' : 'text-slate-400'}`}>EN</button><button onClick={() => setLanguage('ms')} className={`text-sm ${language === 'ms' ? 'text-white font-bold' : 'text-slate-400'}`}>BM</button><button onClick={() => setLanguage('zh')} className={`text-sm ${language === 'zh' ? 'text-white font-bold' : 'text-slate-400'}`}>CN</button></div>{user ? (<div className="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-white/5" onClick={() => { setActivePage('profile'); setIsOpen(false); }}><div className="flex items-center gap-2"><img src={user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`} alt="User" className="w-8 h-8 rounded-full bg-slate-700" /><span className="text-white font-bold">{user.displayName}</span></div><button onClick={(e) => { e.stopPropagation(); onLogout(); }} className="text-red-400 text-sm font-bold flex items-center gap-1"><LogOut size={14}/> {t('nav_logout')}</button></div>) : null}</div>)}
     </nav>
