@@ -16,7 +16,6 @@ export const DEFAULT_HOME_CONFIG = {
   mediaUrl: "https://vidaworld.com.my/wp-content/uploads/2025/01/VIDA-Zero_16x9_.mp4",
 };
 
-};
 
 // Updated initial product set based on user request
 export const INITIAL_PRODUCTS = [
