@@ -70,8 +70,6 @@ export const DEFAULT_ADS_CONFIG = {
   link: ''
 };
 
-};
-
 
 export const THEME_SETS: Record<string, string[]> = {
   default: ['🥔', '🍫', '🥤', '🍬', '🍪', '🧃'],
